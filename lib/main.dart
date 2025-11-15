@@ -136,6 +136,8 @@ class _CharactersGridPageState extends State<CharactersGridPage> {
   bool _cargando = true;
   String? _error;
 
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -189,94 +191,125 @@ class _CharactersGridPageState extends State<CharactersGridPage> {
             )
           : _characters.isEmpty
           ? const Center(child: Text('No se encontraron personajes'))
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.7,
-              ),
-              itemCount: _characters.length,
-              itemBuilder: (context, index) {
-                final character = _characters[index];
-                return Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            ClipRRect(
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                              child: Image.network(
-                                character.image,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(color: Colors.grey[300], child: const Icon(Icons.error, size: 50));
-                                },
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      value: loadingProgress.expectedTotalBytes != null
-                                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                          : null,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: character.statusColor.withOpacity(0.9),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  character.status,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+          : Column(
+              children: [
+                SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TextField(
+                    decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Buscar personaje'),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                  ),
+                ),
+                SizedBox(height: 12),
+                Expanded(
+                  child: Builder(
+                    builder: (context) {
+                      final filteredCharacters = _characters
+                          .where((character) => character.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+                          .toList();
+                      return GridView.builder(
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 0.7,
+                        ),
+                        itemCount: filteredCharacters.length,
+                        itemBuilder: (context, index) {
+                          final character = filteredCharacters[index];
+
+                          return Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                        child: Image.network(
+                                          character.image,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              color: Colors.grey[300],
+                                              child: const Icon(Icons.error, size: 50),
+                                            );
+                                          },
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                value: loadingProgress.expectedTotalBytes != null
+                                                    ? loadingProgress.cumulativeBytesLoaded /
+                                                          loadingProgress.expectedTotalBytes!
+                                                    : null,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: character.statusColor.withOpacity(0.9),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Text(
+                                            character.status,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        character.name,
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        character.species,
+                                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              character.name,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              character.species,
-                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          );
+                        },
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+              ],
             ),
     );
   }
